@@ -11,9 +11,10 @@ import java.net.Socket;
  */
 public class Server {
 
+    final static String QUIT = "quit";
+    final static int DEFAULT_PORT = 8888;
+
     public static void main(String[] args) {
-        final String QUIT = "quit";
-        final int DEFAULT_PORT = 8888;
         ServerSocket serverSocket;
 
         try {
@@ -23,30 +24,41 @@ public class Server {
             while (true) {
                 // 等待客户端连接
                 Socket socket = serverSocket.accept();
-                System.out.println("客户端[" + socket.getPort() + "]已连接");
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
-                    String msg;
-                    // 读取客户端发送的消息
-                    while ((msg = reader.readLine()) != null) {
-
-                        // 查看客户端是否退出
-                        if (QUIT.equals(msg)) {
-                            System.out.println("客户端[" + socket.getPort() + "]已断开连接");
-                            break;
-                        }
-
-                        System.out.println("客户端[" + socket.getPort() + "]: " + msg);
-
-                        // 回复客户发送的消息
-                        writer.write("服务器: " + msg + "\n");
-                        writer.flush();
+                Thread thread = new Thread(() -> {
+                    try {
+                        handle(socket);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                }
+                });
+                thread.start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    }
+
+    private static void handle(Socket socket) throws IOException {
+        System.out.println("客户端[" + socket.getPort() + "]已连接");
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+            String msg;
+            // 读取客户端发送的消息
+            while ((msg = reader.readLine()) != null) {
+
+                // 查看客户端是否退出
+                if (QUIT.equals(msg)) {
+                    System.out.println("客户端[" + socket.getPort() + "]已断开连接");
+                    break;
+                }
+
+                System.out.println("客户端[" + socket.getPort() + "]: " + msg);
+
+                // 回复客户发送的消息
+                writer.write("服务器: " + msg + "\n");
+                writer.flush();
+            }
+        }
     }
 }
