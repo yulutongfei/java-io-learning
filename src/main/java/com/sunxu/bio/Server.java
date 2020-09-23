@@ -12,6 +12,7 @@ import java.net.Socket;
 public class Server {
 
     public static void main(String[] args) {
+        final String QUIT = "quit";
         final int DEFAULT_PORT = 8888;
         ServerSocket serverSocket;
 
@@ -25,9 +26,16 @@ public class Server {
                 System.out.println("客户端[" + socket.getPort() + "]已连接");
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+                    String msg;
                     // 读取客户端发送的消息
-                    String msg = reader.readLine();
-                    if (msg != null) {
+                    while ((msg = reader.readLine()) != null) {
+
+                        // 查看客户端是否退出
+                        if (QUIT.equals(msg)) {
+                            System.out.println("客户端[" + socket.getPort() + "]已断开连接");
+                            break;
+                        }
+
                         System.out.println("客户端[" + socket.getPort() + "]: " + msg);
 
                         // 回复客户发送的消息
